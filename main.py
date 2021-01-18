@@ -6,13 +6,8 @@ from torchvision import transforms as transforms
 import numpy as np
 import time
 import argparse
-
 from models import *
 from misc import progress_bar
-
-
-CLASSES = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
 
 def main():
     parser = argparse.ArgumentParser(description="cifar-10 with PyTorch")
@@ -24,7 +19,8 @@ def main():
     args = parser.parse_args()
 
     solver = Solver(args)
-    solver.run()
+    solver.load_model()
+    solver.train()
 
 
 class Solver(object):
@@ -58,35 +54,39 @@ class Solver(object):
             self.device = torch.device('cpu')
 
         #self.model = LeNet().to(self.device)
-        # self.model = AlexNet().to(self.device)
+        self.model = AlexNet().to(self.device)
         # self.model = VGG11().to(self.device)
         # self.model = VGG13().to(self.device)
-        # self.model = VGG16().to(self.device)
+#         self.model = VGG16().to(self.device)
         # self.model = VGG19().to(self.device)
         # self.model = GoogLeNet().to(self.device)
         # self.model = resnet18().to(self.device)
         # self.model = resnet34().to(self.device)
-        self.model = ResNet50().to(self.device)
-        # self.model = resnet101().to(self.device)
-        # self.model = resnet152().to(self.device)
+        # self.model = ResNet50().to(self.device)
+        # self.model = ResNet101().to(self.device)
+        # self.model = ResNet152().to(self.device)
+        # self.model = inception_v4().to(self.device)
         # self.model = DenseNet121().to(self.device)
         # self.model = DenseNet161().to(self.device)
         # self.model = DenseNet169().to(self.device)
         # self.model = DenseNet201().to(self.device)
         #self.model = WideResNet(depth=28, num_classes=10).to(self.device)
 
-        #self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-        #self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[75, 150], gamma=0.5)
-        #self.criterion = nn.CrossEntropyLoss().to(self.device)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
+        self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[75, 150], gamma=0.5)
+        self.criterion = nn.CrossEntropyLoss().to(self.device)
 
     def train(self):
         print("train:")
-        self.model.train()
         train_loss = 0
         train_correct = 0
         total = 0
 
-        for batch_num, (data, target) in enumerate(self.train_loader):
+        # for batch_num, (data, target) in enumerate(self.train_loader):
+        while True:
+            data = torch.rand([64,3,224,224])
+#             data = torch.rand([64,3,299,299])
+            target = torch.zeros([64],dtype=torch.long)
             data, target = data.to(self.device), target.to(self.device)
             self.optimizer.zero_grad()
             output = self.model(data)
@@ -96,15 +96,7 @@ class Solver(object):
             train_loss += loss.item()
             prediction = torch.max(output, 1)  # second param "1" represents the dimension to be reduced
             total += target.size(0)
-
-            # train_correct incremented by one if predicted right
-            train_correct += np.sum(prediction[1].cpu().numpy() == target.cpu().numpy())
-
-            progress_bar(batch_num, len(self.train_loader), 'Loss: %.4f | Acc: %.3f%% (%d/%d)'
-                         % (train_loss / (batch_num + 1), 100. * train_correct / total, train_correct, total))
-
-        return train_loss, train_correct / total
-
+        return True
     def test(self):
         print("test:")
         self.model.eval()
